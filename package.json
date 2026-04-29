@@ -8,11 +8,9 @@
     "@douyinfe/semi-icons-lab": "^2.59.1",
     "@douyinfe/semi-ui": "^2.59.1",
     "axios": "^1.7.7",
-    "history": "^5.3.0",
     "papaparse": "^5.4.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "web-vitals": "^2.1.4"
+    "react-dom": "^18.2.0"
   },
   "scripts": {
     "dev": "vite",
