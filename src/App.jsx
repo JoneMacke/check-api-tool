@@ -160,21 +160,21 @@ export default function App() {
             id="token-input"
             type="text"
             value={key}
-            placeholder="Search token key"
+            placeholder="请输入令牌"
             onChange={(e) => setKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onQuery()}
             spellCheck={false}
           />
-          <button className="search-btn" onClick={onQuery} disabled={loading} aria-label="search">
-            {loading ? '···' : '⌕'}
+          <button className="search-btn" onClick={onQuery} disabled={loading} aria-label="查询">
+            {loading ? '查询中' : '查询'}
           </button>
         </div>
-        {key && <button className="clear-btn" onClick={() => setKey('')}>Clear token</button>}
+        {key && <button className="clear-btn" onClick={() => setKey('')}>清空令牌</button>}
       </section>
 
       {!data && !loading && (
         <section className="empty-state">
-          <div>⌕</div>
+          <div>等待查询</div>
           <p>输入令牌并点击搜索，额度信息会显示在这里。</p>
         </section>
       )}
@@ -185,20 +185,20 @@ export default function App() {
         <>
           <section className="overview-section">
             <div className="section-head">
-              <h2>Quota overview</h2>
+              <h2>额度概览</h2>
               <button className="copy-btn" onClick={onCopy}>复制 JSON</button>
             </div>
           <div className="usage-grid">
-            <MoneyCard label="总额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.granted)} note="Total quota" accent="teal" />
-            <MoneyCard label="剩余额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.available)} note="Available" />
+            <MoneyCard label="总额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.granted)} accent="teal" />
+            <MoneyCard label="剩余额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.available)} />
           </div>
           </section>
 
           <section className="details-section">
-            <h2>Usage details</h2>
+            <h2>使用详情</h2>
             <div className="details-list">
               <DetailRow label="已使用额度" value={fmtUsd(usage.used)} />
-              <DetailRow label="到期时间" value={usage.expiresAt} note="Expires at" accent="date" />
+              <DetailRow label="到期时间" value={usage.expiresAt} note="有效期" accent="date" />
             </div>
           </section>
         </>

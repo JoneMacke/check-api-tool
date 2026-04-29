@@ -8,13 +8,19 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
+  min-height: 100vh;
 }
 
 body {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: clamp(14px, 3vw, 28px);
   font-family: Inter, ui-rounded, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   color: #17191f;
-  background: #eef3f8;
+  background:
+    radial-gradient(circle at 50% -12%, rgba(127, 208, 220, 0.35), transparent 34%),
+    linear-gradient(135deg, #eef3f8 0%, #f9fcff 48%, #e8f4f8 100%);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -28,12 +34,14 @@ button {
 }
 
 .app-shell {
-  width: min(620px, 100%);
-  min-height: 100vh;
+  width: min(760px, 100%);
+  max-height: calc(100vh - clamp(28px, 6vw, 56px));
+  overflow: auto;
   margin: 0 auto;
-  padding: clamp(28px, 6vw, 40px) clamp(22px, 6vw, 38px) 30px;
+  padding: clamp(26px, 4vw, 42px) clamp(22px, 5vw, 48px) 28px;
   background: #ffffff;
-  box-shadow: 0 22px 70px rgba(30, 48, 72, 0.08);
+  border-radius: clamp(24px, 4vw, 34px);
+  box-shadow: 0 28px 88px rgba(30, 48, 72, 0.14);
 }
 
 .topbar {
@@ -41,7 +49,7 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  margin-bottom: 24px;
+  margin-bottom: clamp(22px, 3vw, 30px);
 }
 
 .topbar h1 {
@@ -70,16 +78,19 @@ button {
 }
 
 .search-panel {
-  margin-bottom: 34px;
+  margin-bottom: clamp(24px, 4vw, 36px);
 }
 
 .search-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  border-bottom: 2px solid #7fd0dc;
-  padding-bottom: 13px;
+  gap: 12px;
+  border: 2px solid #e6f4f7;
+  border-radius: 20px;
+  padding: 10px 10px 10px 18px;
+  background: #fbfdff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 12px 24px rgba(36, 52, 75, 0.05);
 }
 
 .search-row input {
@@ -98,14 +109,17 @@ button {
 }
 
 .search-btn {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 82px;
+  height: 44px;
   border: 0;
-  color: #087f99;
-  background: transparent;
-  font-size: 32px;
+  border-radius: 15px;
+  color: #ffffff;
+  background: #7fd0dc;
+  box-shadow: 0 12px 22px rgba(99, 195, 210, 0.28);
+  font-size: 15px;
   font-weight: 1000;
   line-height: 1;
 }
@@ -164,8 +178,8 @@ button {
 .usage-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(18px, 5vw, 34px);
-  margin-bottom: 36px;
+  gap: clamp(16px, 3vw, 24px);
+  margin-bottom: clamp(26px, 4vw, 34px);
 }
 
 .money-card {
@@ -174,7 +188,7 @@ button {
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: clamp(210px, 44vw, 330px);
+  min-height: clamp(150px, 24vw, 220px);
   border-radius: 21px;
   padding: 24px 16px;
   color: #111318;
@@ -199,7 +213,7 @@ button {
 .money-value {
   max-width: 100%;
   color: inherit;
-  font-size: clamp(25px, 7vw, 30px);
+  font-size: clamp(24px, 5vw, 34px);
   font-weight: 1000;
   line-height: 1.15;
   word-break: break-word;
@@ -218,14 +232,14 @@ button {
 
 .details-list {
   display: grid;
-  gap: 32px;
+  gap: clamp(16px, 3vw, 24px);
 }
 
 .detail-row {
   display: grid;
-  grid-template-columns: 94px minmax(0, 1fr) minmax(110px, auto);
+  grid-template-columns: 88px minmax(0, 1fr) minmax(140px, auto);
   align-items: center;
-  min-height: 144px;
+  min-height: 116px;
   overflow: hidden;
   border-radius: 20px;
   background: #ffffff;
@@ -293,8 +307,12 @@ button {
 
 .empty-state {
   display: grid;
+  grid-template-rows: auto auto;
   place-items: center;
-  min-height: 300px;
+  align-content: center;
+  gap: 22px;
+  min-height: clamp(240px, 38vh, 360px);
+  padding: clamp(36px, 8vw, 70px) 24px;
   border-radius: 24px;
   color: #9da4ad;
   text-align: center;
@@ -303,17 +321,33 @@ button {
 }
 
 .empty-state div {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 168px;
+  min-height: 62px;
+  padding: 0 28px;
+  border: 2px solid #7fd0dc;
+  border-radius: 18px;
   color: #087f99;
-  font-size: 48px;
+  background: #f7fdff;
+  box-shadow: 0 14px 30px rgba(99, 195, 210, 0.16);
+  font-size: clamp(24px, 5vw, 32px);
   font-weight: 1000;
 }
 
 .empty-state p {
   max-width: 320px;
-  margin: 10px 24px 0;
+  margin: 0;
   font-size: 15px;
   font-weight: 700;
   line-height: 1.7;
+}
+
+.empty-state.loading {
+  color: #087f99;
+  font-size: 18px;
+  font-weight: 1000;
 }
 
 footer {
@@ -365,21 +399,16 @@ footer {
   font-size: 18px;
 }
 
-@media (min-width: 760px) {
-  body {
-    display: grid;
-    place-items: start center;
-  }
-
-  .app-shell {
-    min-height: auto;
-    margin: 20px auto;
-    border-radius: 28px;
-  }
-}
-
 @media (max-width: 520px) {
+  body {
+    padding: 0;
+    place-items: stretch;
+  }
+
   .app-shell {
+    max-height: none;
+    min-height: 100vh;
+    border-radius: 0;
     padding-inline: 18px;
   }
 
@@ -388,7 +417,7 @@ footer {
   }
 
   .money-card {
-    min-height: 178px;
+    min-height: 158px;
   }
 
   .detail-row {
@@ -423,7 +452,7 @@ footer {
   }
 
   .money-card {
-    min-height: 160px;
+    min-height: 148px;
   }
 
   .detail-row {
