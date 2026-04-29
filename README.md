@@ -1,11 +1,9 @@
-# 🐾 Neko API Key Tool
+# Check API Key Tool
 
 一个面向 [New API](https://github.com/Calcium-Ion/new-api) / [One API](https://github.com/songquanpeng/one-api) 网关的 **令牌（API Key）自助查询前端**。
 用户输入 `sk-xxxx` 即可查看令牌额度、剩余配额、过期时间，以及完整的模型调用日志，并支持一键导出 CSV。
 
 > 纯前端 SPA，零后端依赖，可一键部署到 **Vercel / Docker / 宝塔面板** 等任意静态托管环境。
-
-![preview](./img.png)
 
 ---
 
@@ -38,8 +36,8 @@
 
 ```bash
 # 1. 克隆
-git clone https://github.com/your-name/neko-api-key-tool.git
-cd neko-api-key-tool
+git clone https://github.com/your-name/check-api-tool.git
+cd check-api-tool
 
 # 2. 安装依赖（推荐 Node 18+）
 npm install
@@ -88,7 +86,7 @@ REACT_APP_BASE_URL={"主站": "https://api.a.com", "备用": "https://api.b.com"
 
 ### 方式 A：一键部署
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-name%2Fneko-api-key-tool)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyour-name%2Fcheck-api-tool)
 
 ### 方式 B：手动部署
 
@@ -121,7 +119,7 @@ REACT_APP_BASE_URL={"主站": "https://api.a.com", "备用": "https://api.b.com"
 ```bash
 docker build \
   --build-arg NODE_ENV=production \
-  -t neko-api-key-tool:latest .
+  -t check-api-tool:latest .
 ```
 
 > 由于环境变量在构建时注入，建议在构建前把 `.env` 放到项目根目录，或使用下面 `docker run` 时的方案 B（运行时挂载已构建好的 `dist/`）。
@@ -130,10 +128,10 @@ docker build \
 
 ```bash
 docker run -d \
-  --name neko-api-key-tool \
+  --name check-api-tool \
   -p 8080:80 \
   --restart unless-stopped \
-  neko-api-key-tool:latest
+  check-api-tool:latest
 ```
 
 打开 `http://服务器IP:8080` 即可访问。
@@ -144,9 +142,9 @@ docker run -d \
 
 ```yaml
 services:
-  neko-api-key-tool:
+  check-api-tool:
     build: .
-    container_name: neko-api-key-tool
+    container_name: check-api-tool
     ports:
       - "8080:80"
     restart: unless-stopped
@@ -197,13 +195,13 @@ npm run build
 
 #### 2. 上传到服务器
 
-将整个 `dist/` 目录里的内容（**注意：是里面的文件，而不是 dist 文件夹本身**）通过宝塔的 **文件管理** 上传到 `/www/wwwroot/neko-api-key-tool/`。
+将整个 `dist/` 目录里的内容（**注意：是里面的文件，而不是 dist 文件夹本身**）通过宝塔的 **文件管理** 上传到 `/www/wwwroot/check-api-tool/`。
 
 #### 3. 在宝塔创建站点
 
 1. **网站 → 添加站点**
    - 域名：`token.your-domain.com`
-   - 根目录：`/www/wwwroot/neko-api-key-tool`
+   - 根目录：`/www/wwwroot/check-api-tool`
    - PHP 版本：`纯静态`
 2. 站点创建后，进入 **设置 → 配置文件**，在 `server { ... }` 块内加入 SPA fallback：
 
@@ -228,8 +226,8 @@ location ~* ^/assets/.*\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
 如果不想在本地构建，可在宝塔的 **软件商店** 中安装 **Node.js 版本管理器**，安装 Node 18+，然后在服务器上执行：
 
 ```bash
-cd /www/wwwroot/neko-api-key-tool
-git clone https://github.com/your-name/neko-api-key-tool.git .
+cd /www/wwwroot/check-api-tool
+git clone https://github.com/your-name/check-api-tool.git .
 cp .env.example .env
 vi .env                 # 修改 REACT_APP_BASE_URL 等
 npm install
@@ -237,12 +235,12 @@ npm run build
 # 让站点根目录指向 dist
 ```
 
-然后到宝塔站点设置中，把站点根目录改为 `/www/wwwroot/neko-api-key-tool/dist`，并加上上面的 SPA fallback。
+然后到宝塔站点设置中，把站点根目录改为 `/www/wwwroot/check-api-tool/dist`，并加上上面的 SPA fallback。
 
 ### 方式 B：宝塔 Docker 部署
 
 1. 在宝塔 **软件商店** 安装 **Docker 管理器**
-2. 进入 **Docker → 镜像 → 构建**，选择项目目录构建 `neko-api-key-tool:latest`
+2. 进入 **Docker → 镜像 → 构建**，选择项目目录构建 `check-api-tool:latest`
 3. **容器 → 添加容器**：端口映射 `8080:80`，重启策略 `unless-stopped`
 4. 在宝塔 **网站 → 反向代理** 创建一个站点反向代理到 `http://127.0.0.1:8080`，并申请 SSL
 
@@ -269,6 +267,6 @@ npm run build
 
 ## 📜 License
 
-MIT © Neko API Key Tool Contributors
+MIT © Check API Key Tool Contributors
 
 如果这个项目对你有帮助，欢迎 ⭐ Star 支持一下～
