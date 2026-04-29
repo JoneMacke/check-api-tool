@@ -1,19 +1,8 @@
 import React, { useState, useMemo, useCallback } from 'react';
 
-/**
- * 二次元风格令牌查询前端
- * - 原生 fetch
- * - 同源请求 /api/...，线上由 Vercel Serverless Function 代理到真实后端
- * - 仅突出美元额度，隐藏原始 Token quota 数值
- */
-
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+const CONSOLE_URL = import.meta.env.VITE_CONSOLE_URL || '';
 const QUOTA_PER_USD = Number(import.meta.env.VITE_QUOTA_PER_USD || 500000);
-
-const fmt = (n) => {
-  if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
-  return Number(n).toLocaleString('en-US');
-};
 
 const fmtUsd = (n) => {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
@@ -30,7 +19,6 @@ const fmtDate = (ts) => {
 };
 
 async function fetchTokenUsage(key) {
-  // 注意：线上使用无尾斜杠路径，命中 Vercel 函数 api/usage/token.js，避免被静态站点 fallback 成 index.html。
   const url = `${API_BASE}/api/usage/token`;
   const res = await fetch(url, {
     method: 'GET',
@@ -40,7 +28,6 @@ async function fetchTokenUsage(key) {
       'Cache-Control': 'no-cache',
     },
   });
-  // 上游可能因为 ETag 返回 304；走 cache:'no-store' 后正常应是 200
   if (!res.ok && res.status !== 304) {
     let detail = '';
     try {
@@ -54,7 +41,6 @@ async function fetchTokenUsage(key) {
   } catch (e) {
     throw new Error('响应不是合法 JSON：/api/usage/token 没有命中代理函数，请确认 Vercel 已重新部署最新代码');
   }
-  // 兼容 code: true / "success" / 1
   const ok =
     json.code === true ||
     json.code === 'success' ||
@@ -76,22 +62,13 @@ function Toast({ type = 'error', children, onClose }) {
   );
 }
 
-function MoneyCard({ label, quota, unlimited, accent = 'pink' }) {
+function MoneyCard({ label, value, note, accent = 'white' }) {
   return (
     <article className={`money-card ${accent}`}>
       <div className="money-label">{label}</div>
-      <div className="money-value">{unlimited ? '无限额度' : fmtUsd(quota)}</div>
+      <div className="money-value">{value}</div>
+      {note && <div className="money-note">{note}</div>}
     </article>
-  );
-}
-
-function MiniInfo({ label, value, note }) {
-  return (
-    <div className="mini-info">
-      <span>{label}</span>
-      <strong>{value}</strong>
-      {note && <em>{note}</em>}
-    </div>
   );
 }
 
@@ -144,7 +121,6 @@ export default function App() {
       data.totalAvailable ??
       (granted != null && used != null ? granted - used : null);
     const unlimited = data.unlimited_quota ?? data.unlimitedQuota;
-    const models = data.model_limits || data.modelLimits || {};
     return {
       granted,
       used,
@@ -152,8 +128,6 @@ export default function App() {
       unlimited,
       name: data.name || '未命名令牌',
       expiresAt: fmtDate(data.expires_at ?? data.expiresAt),
-      modelText: data.model_limits_enabled || data.modelLimitsEnabled ? '已启用' : '未启用',
-      modelNote: Object.keys(models).length ? Object.keys(models).join(', ') : '无模型白名单限制',
     };
   }, [data]);
 
@@ -165,9 +139,11 @@ export default function App() {
 
       <header className="topbar">
         <div className="brand-mark">🔑 令牌查询</div>
-        <a className="console-link" href="https://api.katioai.com" target="_blank" rel="noreferrer">
-          前往控制台 ↗
-        </a>
+        {CONSOLE_URL && (
+          <a className="console-link" href={CONSOLE_URL} target="_blank" rel="noreferrer">
+            前往控制台 ↗
+          </a>
+        )}
       </header>
 
       <section className="hero-card">
@@ -223,16 +199,10 @@ export default function App() {
 
         {usage && (
           <div className="usage-grid">
-            <MoneyCard label="剩余美元额度" quota={usage.available} unlimited={usage.unlimited} accent="pink" />
-            <MoneyCard label="总美元额度" quota={usage.granted} unlimited={usage.unlimited} accent="violet" />
-            <MoneyCard label="已使用美元额度" quota={usage.used} unlimited={false} accent="blue" />
-
-            <div className="detail-card">
-              <MiniInfo label="令牌名称" value={usage.name} />
-              <MiniInfo label="过期时间" value={usage.expiresAt} />
-              <MiniInfo label="模型限制" value={usage.modelText} note={usage.modelNote} />
-              <MiniInfo label="额度单位" value="美元额度" note="原始 quota 数值已隐藏" />
-            </div>
+            <MoneyCard label="总额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.granted)} note="Total quota" accent="teal" />
+            <MoneyCard label="剩余额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.available)} note="Available" />
+            <MoneyCard label="已使用额度" value={fmtUsd(usage.used)} note="Used" />
+            <MoneyCard label="到期时间" value={usage.expiresAt} note={usage.name} accent="date" />
           </div>
         )}
       </section>

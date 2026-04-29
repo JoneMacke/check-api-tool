@@ -14,8 +14,6 @@ export default defineConfig(({ mode }) => {
       open: true,
       proxy: upstreamBase
         ? {
-            // 本地开发：配置 UPSTREAM_API_BASE 后，把 /api/* 转发到上游，避免 CORS。
-            // 上线由 api/usage/token.js 这个 Vercel Serverless Function 接管。
             '/api': {
               target: upstreamBase,
               changeOrigin: true,
