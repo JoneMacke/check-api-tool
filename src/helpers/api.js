@@ -9,6 +9,13 @@ import { showError } from './utils';
  */
 export const API = axios.create({
   timeout: 15000,
+  // 把 304 也当成成功响应（部分反代/上游会对 GET 返回 304）
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+  // 加随机参数避免缓存导致的 304
+  headers: {
+    'Cache-Control': 'no-cache',
+    Pragma: 'no-cache',
+  },
 });
 
 API.interceptors.response.use(
