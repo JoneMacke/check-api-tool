@@ -1,32 +1,43 @@
-# ---------- Build stage ----------
-FROM node:20-alpine AS builder
-
+# --- build stage ---
+FROM node:20-alpine AS build
 WORKDIR /app
-
-# 仅拷贝依赖描述以利用层缓存
 COPY package*.json ./
-RUN npm ci --no-audit --no-fund
-
-# 拷贝源码并构建
+RUN npm install --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-# ---------- Runtime stage ----------
+# --- runtime stage ---
 FROM nginx:1.27-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+RUN rm /etc/nginx/conf.d/default.conf
+COPY <<'EOF' /etc/nginx/conf.d/app.conf
+server {
+    listen 80;
+    server_name _;
 
-# 复制 Vite 构建产物
-COPY --from=builder /app/dist /usr/share/nginx/html
+    root /usr/share/nginx/html;
+    index index.html;
 
-# 单页应用 history 路由的 fallback
-RUN printf 'server {\n\
-    listen 80;\n\
-    server_name _;\n\
-    root /usr/share/nginx/html;\n\
-    index index.html;\n\
-    location / {\n\
-        try_files $uri $uri/ /index.html;\n\
-    }\n\
-}\n' > /etc/nginx/conf.d/default.conf
+    # 反代上游 API，规避浏览器跨域
+    location /api/ {
+        proxy_pass https://api.katioai.com;
+        proxy_set_header Host api.katioai.com;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_ssl_server_name on;
+        proxy_http_version 1.1;
+    }
 
+    # SPA fallback
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 静态资源缓存
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+}
+EOF
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
