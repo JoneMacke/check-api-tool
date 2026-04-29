@@ -8,11 +8,12 @@ export default defineConfig({
     open: true,
     proxy: {
       // 本地开发：把 /api/* 转发到上游，避免 CORS。
-      // 上线由 vercel.json 的 rewrites 接管。
+      // 上线由 api/usage/token.js 这个 Vercel Serverless Function 接管。
       '/api': {
         target: 'https://api.katioai.com',
         changeOrigin: true,
         secure: true,
+        rewrite: (path) => (path === '/api/usage/token' ? '/api/usage/token/' : path),
       },
     },
   },

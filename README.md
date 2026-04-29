@@ -8,7 +8,7 @@
 - ⚡ **Vite 5 + React 18**，零冗余依赖（运行时仅 `react`、`react-dom`）
 - 🧼 **单文件 UI**：`src/App.jsx` 一文到底，没有路由、没有状态库、没有 UI 框架
 - 🌐 **原生 fetch**，不再依赖 axios
-- 🛡️ **同源 `/api`**：本地 Vite proxy、线上 Vercel rewrite / Nginx 反代，**彻底规避 CORS**
+- 🛡️ **同源 `/api`**：本地 Vite proxy、线上 Vercel Serverless Function / Nginx 反代，**彻底规避 CORS**
 - 🧩 **响应兼容**：`code: true | "success" | 1` 全部识别为成功
 - 🐳 **一键 Docker**：多阶段构建 → Nginx 静态托管 + 反代
 
@@ -47,15 +47,17 @@ npm run preview      # 本地预览构建产物
 
 ### Vercel
 
-仓库已包含 `vercel.json`，直接 Import 即可：
+仓库已包含 `api/usage/token.js` 和 `vercel.json`，直接 Import 即可：
 
 | 配置        | 值              |
 | ----------- | --------------- |
 | Build       | `npm run build` |
 | Output Dir  | `dist`          |
-| Rewrites    | `/api/*` → `https://api.katioai.com/api/*` |
+| API Proxy   | `/api/usage/token` → Vercel Function → `https://api.katioai.com/api/usage/token/` |
 
-要换后端，编辑 `vercel.json` 里的 `destination` 一行就行。
+线上不再使用外部 `rewrites` 转发 API，避免 `/api/*` 被 SPA fallback 成 `index.html`。
+
+要换后端，编辑 `api/usage/token.js` 里的 `UPSTREAM_URL` 即可。
 
 ### Docker
 
@@ -73,7 +75,8 @@ docker run -d -p 8080:80 --name check-api-tool check-api-tool
 
 ## 🔌 API 约定
 
-- **Endpoint**: `GET /api/usage/token/`
+- **Frontend Endpoint**: `GET /api/usage/token`
+- **Upstream Endpoint**: `GET https://api.katioai.com/api/usage/token/`
 - **Auth**: `Authorization: Bearer sk-xxxxxxxx`
 - **Response**:
 
@@ -101,12 +104,16 @@ docker run -d -p 8080:80 --name check-api-tool check-api-tool
 ```
 .
 ├── index.html            # 入口 HTML
+├── api/
+│   └── usage/token.js    # Vercel Serverless API 代理
 ├── src/
 │   ├── index.jsx         # React 挂载点
 │   ├── App.jsx           # 全部 UI + fetch 逻辑
 │   └── index.css         # 全局样式（仅 reset + body 渐变）
+├── public/
+│   └── robots.txt        # 搜索引擎爬虫规则
 ├── vite.config.js        # 含 dev proxy
-├── vercel.json           # 线上 rewrites
+├── vercel.json           # Vercel 构建与静态资源缓存配置
 ├── Dockerfile            # 多阶段构建 + nginx
 └── package.json
 ```

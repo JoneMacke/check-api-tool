@@ -3,11 +3,11 @@ import React, { useState, useMemo, useCallback } from 'react';
 /**
  * 极简令牌查询前端
  * - 原生 fetch，零包装
- * - 同源请求 /api/...，由 Vercel rewrite / Nginx 反代到真实后端
+ * - 同源请求 /api/...，线上由 Vercel Serverless Function 代理到真实后端
  * - 兼容上游响应：{ code: true|"success", data: {...}, message: "ok" }
  */
 
-// 同源（部署后由 vercel.json rewrite 转发到上游）。本地开发时可以在 .env 里覆盖：
+// 同源（部署后由 api/usage/token.js 代理到上游）。本地开发时可以在 .env 里覆盖：
 //   VITE_API_BASE=https://api.katioai.com
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
@@ -30,7 +30,8 @@ const fmtDate = (ts) => {
 };
 
 async function fetchTokenUsage(key) {
-  const url = `${API_BASE}/api/usage/token/`;
+  // 注意：线上使用无尾斜杠路径，命中 Vercel 函数 api/usage/token.js，避免被静态站点 fallback 成 index.html。
+  const url = `${API_BASE}/api/usage/token`;
   const res = await fetch(url, {
     method: 'GET',
     cache: 'no-store',
@@ -51,7 +52,7 @@ async function fetchTokenUsage(key) {
   try {
     json = await res.json();
   } catch (e) {
-    throw new Error('响应不是合法 JSON，可能 API 地址错误或被反代页面拦截');
+    throw new Error('响应不是合法 JSON：/api/usage/token 没有命中代理函数，请确认 Vercel 已重新部署最新代码');
   }
   // 兼容 code: true / "success" / 1
   const ok =

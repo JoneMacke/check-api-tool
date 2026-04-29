@@ -18,11 +18,23 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # 反代上游 API，规避浏览器跨域
+    # 反代上游 API，规避浏览器跨域。
+    # 前端请求无尾斜杠 /api/usage/token，这里显式映射到上游有尾斜杠路径。
+    location = /api/usage/token {
+        proxy_pass https://api.katioai.com/api/usage/token/;
+        proxy_set_header Host api.katioai.com;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Authorization $http_authorization;
+        proxy_ssl_server_name on;
+        proxy_http_version 1.1;
+    }
+
+    # 其他 /api/ 请求保留通用反代
     location /api/ {
         proxy_pass https://api.katioai.com;
         proxy_set_header Host api.katioai.com;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Authorization $http_authorization;
         proxy_ssl_server_name on;
         proxy_http_version 1.1;
     }
