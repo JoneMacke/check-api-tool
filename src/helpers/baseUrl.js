@@ -24,8 +24,9 @@ export function parseBaseUrls() {
   try {
     const parsed = JSON.parse(raw);
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      // 允许空字符串作为合法值：表示走同源（由 Vercel/Nginx rewrite 反代到上游），可绕过 CORS
       const entries = Object.entries(parsed).filter(
-        ([, v]) => typeof v === 'string' && v.length > 0,
+        ([, v]) => typeof v === 'string',
       );
       if (entries.length === 0) return { ...FALLBACK };
       return Object.fromEntries(entries);

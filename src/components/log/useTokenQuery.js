@@ -36,7 +36,8 @@ export function useTokenQuery() {
       Toast.error('令牌格式非法！');
       return;
     }
-    if (!baseUrl) {
+    // baseUrl 允许为空字符串：此时所有请求会走同源（由部署平台 rewrite 反代到上游），用于绕过 CORS
+    if (baseUrl === undefined || baseUrl === null) {
       Toast.error('未配置 NewAPI 地址（REACT_APP_BASE_URL）');
       return;
     }
