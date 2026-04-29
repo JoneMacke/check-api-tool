@@ -72,6 +72,19 @@ function MoneyCard({ label, value, note, accent = 'white' }) {
   );
 }
 
+function DetailRow({ label, value, note, accent = 'white' }) {
+  return (
+    <article className={`detail-row ${accent}`}>
+      <div className="avatar">{accent === 'date' ? '⏳' : '💳'}</div>
+      <div className="detail-main">
+        <h3>{label}</h3>
+        {note && <span>{note}</span>}
+      </div>
+      <div className="detail-value">{value}</div>
+    </article>
+  );
+}
+
 export default function App() {
   const [key, setKey] = useState('');
   const [loading, setLoading] = useState(false);
@@ -132,82 +145,67 @@ export default function App() {
   }, [data]);
 
   return (
-    <main className="anime-shell">
-      <div className="orb orb-a" />
-      <div className="orb orb-b" />
-      <div className="star-field" aria-hidden="true">✦ ✧ ✦ ✧ ✦</div>
-
+    <main className="app-shell">
       <header className="topbar">
-        <div className="brand-mark">🔑 令牌查询</div>
+        <h1>Token Balance</h1>
         {CONSOLE_URL && (
           <a className="console-link" href={CONSOLE_URL} target="_blank" rel="noreferrer">
-            前往控制台 ↗
+            + 控制台
           </a>
         )}
       </header>
 
-      <section className="hero-card">
-        <div className="hero-copy">
-          <div className="badge">Neko API Key Tool</div>
-          <h1>魔法令牌余额查询</h1>
-        </div>
-        <div className="mascot" aria-hidden="true">
-          <div className="cat-ear left" />
-          <div className="cat-ear right" />
-          <div className="cat-face">ฅ^•ﻌ•^ฅ</div>
-          <span>Balance Quest</span>
-        </div>
-      </section>
-
-      <section className="query-panel">
-        <label htmlFor="token-input">召唤令牌</label>
-        <div className="input-row">
-          <span className="lock">🔮</span>
+      <section className="search-panel">
+        <div className="search-row">
           <input
             id="token-input"
             type="text"
             value={key}
-            placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
+            placeholder="Search token key"
             onChange={(e) => setKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onQuery()}
             spellCheck={false}
           />
-          {key && <button className="ghost-btn" onClick={() => setKey('')}>清空</button>}
-          <button className="primary-btn" onClick={onQuery} disabled={loading}>
-            {loading ? '占卜中…' : '开始查询'}
+          <button className="search-btn" onClick={onQuery} disabled={loading} aria-label="search">
+            {loading ? '···' : '⌕'}
           </button>
         </div>
+        {key && <button className="clear-btn" onClick={() => setKey('')}>Clear token</button>}
       </section>
 
-      <section className="result-panel">
-        <div className="panel-head">
-          <div>
-            <span className="kicker">Result</span>
-            <h2>余额卡片</h2>
-          </div>
-          <button className="copy-btn" onClick={onCopy} disabled={!data}>复制 JSON</button>
-        </div>
+      {!data && !loading && (
+        <section className="empty-state">
+          <div>⌕</div>
+          <p>输入令牌并点击搜索，额度信息会显示在这里。</p>
+        </section>
+      )}
 
-        {!data && !loading && (
-          <div className="empty-state">
-            <div>🌙</div>
-            <p>等待令牌输入中，查询后会在这里显示美元额度。</p>
-          </div>
-        )}
+      {loading && <section className="empty-state loading">正在查询令牌额度…</section>}
 
-        {loading && <div className="empty-state loading">魔法水晶正在读取额度…</div>}
-
-        {usage && (
+      {usage && (
+        <>
+          <section className="overview-section">
+            <div className="section-head">
+              <h2>Quota overview</h2>
+              <button className="copy-btn" onClick={onCopy}>复制 JSON</button>
+            </div>
           <div className="usage-grid">
             <MoneyCard label="总额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.granted)} note="Total quota" accent="teal" />
             <MoneyCard label="剩余额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.available)} note="Available" />
-            <MoneyCard label="已使用额度" value={fmtUsd(usage.used)} note="Used" />
-            <MoneyCard label="到期时间" value={usage.expiresAt} note={usage.name} accent="date" />
           </div>
-        )}
-      </section>
+          </section>
 
-      <footer>© {new Date().getFullYear()} check-api-tool · made with neko magic</footer>
+          <section className="details-section">
+            <h2>Usage details</h2>
+            <div className="details-list">
+              <DetailRow label="已使用额度" value={fmtUsd(usage.used)} note={usage.name} />
+              <DetailRow label="到期时间" value={usage.expiresAt} note="Expires at" accent="date" />
+            </div>
+          </section>
+        </>
+      )}
+
+      <footer>© {new Date().getFullYear()} check-api-tool</footer>
 
       {toast && <Toast type={toast.type} onClose={() => setToast(null)}>{toast.msg}</Toast>}
     </main>
