@@ -6,9 +6,9 @@ const QUOTA_PER_USD = Number(import.meta.env.VITE_QUOTA_PER_USD || 500000);
 
 const fmtUsd = (n) => {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
-  return `${(Number(n) / QUOTA_PER_USD).toLocaleString('en-US', {
+  return (Number(n) / QUOTA_PER_USD).toLocaleString('en-US', {
     maximumFractionDigits: 4,
-  })}$`;
+  });
 };
 
 const fmtDate = (ts) => {
