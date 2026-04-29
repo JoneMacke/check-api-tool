@@ -139,7 +139,6 @@ export default function App() {
       used,
       available,
       unlimited,
-      name: data.name || '未命名令牌',
       expiresAt: fmtDate(data.expires_at ?? data.expiresAt),
     };
   }, [data]);
@@ -147,7 +146,7 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <h1>Token Balance</h1>
+        <h1>令牌查询</h1>
         {CONSOLE_URL && (
           <a className="console-link" href={CONSOLE_URL} target="_blank" rel="noreferrer">
             + 控制台
@@ -198,7 +197,7 @@ export default function App() {
           <section className="details-section">
             <h2>Usage details</h2>
             <div className="details-list">
-              <DetailRow label="已使用额度" value={fmtUsd(usage.used)} note={usage.name} />
+              <DetailRow label="已使用额度" value={fmtUsd(usage.used)} />
               <DetailRow label="到期时间" value={usage.expiresAt} note="Expires at" accent="date" />
             </div>
           </section>
