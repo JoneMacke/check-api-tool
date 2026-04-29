@@ -1,25 +1,25 @@
 import React, { useState, useMemo, useCallback } from 'react';
 
 /**
- * 极简令牌查询前端
- * - 原生 fetch，零包装
+ * 二次元风格令牌查询前端
+ * - 原生 fetch
  * - 同源请求 /api/...，线上由 Vercel Serverless Function 代理到真实后端
- * - 兼容上游响应：{ code: true|"success", data: {...}, message: "ok" }
+ * - 仅突出美元额度，隐藏原始 Token quota 数值
  */
 
-// 同源（部署后由 api/usage/token.js 代理到上游）。本地开发时可以在 .env 里覆盖：
-//   VITE_API_BASE=https://api.katioai.com
 const API_BASE = import.meta.env.VITE_API_BASE || '';
+const QUOTA_PER_USD = Number(import.meta.env.VITE_QUOTA_PER_USD || 500000);
 
 const fmt = (n) => {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
   return Number(n).toLocaleString('en-US');
 };
 
-const fmtQuota = (n) => {
-  // 上游 quota 单位：1 美元 = 500000
+const fmtUsd = (n) => {
   if (n === null || n === undefined || Number.isNaN(Number(n))) return '-';
-  return `$${(Number(n) / 500000).toFixed(4)}`;
+  return `${(Number(n) / QUOTA_PER_USD).toLocaleString('en-US', {
+    maximumFractionDigits: 4,
+  })}$`;
 };
 
 const fmtDate = (ts) => {
@@ -67,90 +67,30 @@ async function fetchTokenUsage(key) {
 }
 
 function Toast({ type = 'error', children, onClose }) {
-  const colors = {
-    error: { bg: '#fef2f2', border: '#fecaca', fg: '#b91c1c', icon: '✕' },
-    success: { bg: '#f0fdf4', border: '#bbf7d0', fg: '#166534', icon: '✓' },
-  }[type];
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 24,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        background: colors.bg,
-        border: `1px solid ${colors.border}`,
-        color: colors.fg,
-        padding: '10px 18px',
-        borderRadius: 10,
-        boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 12,
-        zIndex: 1000,
-        fontSize: 14,
-        maxWidth: '90vw',
-      }}
-    >
-      <span
-        style={{
-          width: 22,
-          height: 22,
-          borderRadius: '50%',
-          background: colors.fg,
-          color: '#fff',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 12,
-        }}
-      >
-        {colors.icon}
-      </span>
+    <div className={`toast toast-${type}`}>
+      <span className="toast-icon">{type === 'success' ? '✓' : '!'}</span>
       <span>{children}</span>
-      <button
-        onClick={onClose}
-        style={{
-          marginLeft: 8,
-          border: 'none',
-          background: 'transparent',
-          color: colors.fg,
-          cursor: 'pointer',
-          fontSize: 16,
-          lineHeight: 1,
-        }}
-        aria-label="close"
-      >
-        ×
-      </button>
+      <button onClick={onClose} aria-label="close">×</button>
     </div>
   );
 }
 
-function Stat({ label, value, hint }) {
+function MoneyCard({ label, quota, unlimited, accent = 'pink' }) {
   return (
-    <div
-      style={{
-        background: '#fff',
-        border: '1px solid #eef2f7',
-        borderRadius: 14,
-        padding: '18px 20px',
-        flex: '1 1 200px',
-        minWidth: 200,
-        boxShadow: '0 2px 10px rgba(15, 23, 42, 0.04)',
-      }}
-    >
-      <div style={{ color: '#64748b', fontSize: 13, marginBottom: 8 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: 22, fontWeight: 600, color: '#0f172a' }}>
-        {value}
-      </div>
-      {hint && (
-        <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
-          {hint}
-        </div>
-      )}
+    <article className={`money-card ${accent}`}>
+      <div className="money-label">{label}</div>
+      <div className="money-value">{unlimited ? '无限额度' : fmtUsd(quota)}</div>
+    </article>
+  );
+}
+
+function MiniInfo({ label, value, note }) {
+  return (
+    <div className="mini-info">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {note && <em>{note}</em>}
     </div>
   );
 }
@@ -169,7 +109,7 @@ export default function App() {
   const onQuery = useCallback(async () => {
     const k = key.trim();
     if (!k) {
-      showToast('error', '请输入令牌（sk-xxxx）');
+      showToast('error', '请输入令牌喵～');
       return;
     }
     setLoading(true);
@@ -177,7 +117,7 @@ export default function App() {
     try {
       const d = await fetchTokenUsage(k);
       setData(d);
-      showToast('success', '查询成功');
+      showToast('success', '查询成功，余额已捕获！');
     } catch (e) {
       showToast('error', e.message || '查询失败');
     } finally {
@@ -189,13 +129,13 @@ export default function App() {
     if (!data) return;
     try {
       await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-      showToast('success', '已复制到剪贴板');
+      showToast('success', '已复制完整 JSON');
     } catch {
       showToast('error', '复制失败');
     }
   }, [data, showToast]);
 
-  const stats = useMemo(() => {
+  const usage = useMemo(() => {
     if (!data) return null;
     const granted = data.total_granted ?? data.totalGranted;
     const used = data.total_used ?? data.totalUsed;
@@ -204,284 +144,102 @@ export default function App() {
       data.totalAvailable ??
       (granted != null && used != null ? granted - used : null);
     const unlimited = data.unlimited_quota ?? data.unlimitedQuota;
-    return [
-      {
-        label: '令牌名称',
-        value: data.name || '-',
-      },
-      {
-        label: '总额度',
-        value: unlimited ? '不限' : fmt(granted),
-        hint: unlimited ? '无限额度' : fmtQuota(granted),
-      },
-      {
-        label: '已使用',
-        value: fmt(used),
-        hint: fmtQuota(used),
-      },
-      {
-        label: '剩余可用',
-        value: unlimited ? '不限' : fmt(available),
-        hint: unlimited ? '无限额度' : fmtQuota(available),
-      },
-      {
-        label: '过期时间',
-        value: fmtDate(data.expires_at ?? data.expiresAt),
-      },
-      {
-        label: '模型限制',
-        value:
-          data.model_limits_enabled || data.modelLimitsEnabled
-            ? '已启用'
-            : '未启用',
-        hint:
-          data.model_limits && Object.keys(data.model_limits).length
-            ? Object.keys(data.model_limits).join(', ')
-            : '无',
-      },
-    ];
+    const models = data.model_limits || data.modelLimits || {};
+    return {
+      granted,
+      used,
+      available,
+      unlimited,
+      name: data.name || '未命名令牌',
+      expiresAt: fmtDate(data.expires_at ?? data.expiresAt),
+      modelText: data.model_limits_enabled || data.modelLimitsEnabled ? '已启用' : '未启用',
+      modelNote: Object.keys(models).length ? Object.keys(models).join(', ') : '无模型白名单限制',
+    };
   }, [data]);
 
   return (
-    <div
-      style={{
-        minHeight: '100%',
-        padding: '40px 16px 80px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-      }}
-    >
-      <header
-        style={{
-          width: '100%',
-          maxWidth: 880,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 28,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontSize: 26 }}>🔑</span>
-          <h1 style={{ margin: 0, fontSize: 20, color: '#0f172a' }}>
-            令牌查询
-          </h1>
-        </div>
-        <a
-          href="https://api.katioai.com"
-          target="_blank"
-          rel="noreferrer"
-          style={{ color: '#6366f1', textDecoration: 'none', fontSize: 13 }}
-        >
-          api.katioai.com ↗
+    <main className="anime-shell">
+      <div className="orb orb-a" />
+      <div className="orb orb-b" />
+      <div className="star-field" aria-hidden="true">✦ ✧ ✦ ✧ ✦</div>
+
+      <header className="topbar">
+        <div className="brand-mark">🔑 令牌查询</div>
+        <a className="console-link" href="https://api.katioai.com" target="_blank" rel="noreferrer">
+          前往控制台 ↗
         </a>
       </header>
 
-      <section
-        style={{
-          width: '100%',
-          maxWidth: 880,
-          background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-          borderRadius: 20,
-          padding: '36px 28px',
-          color: '#fff',
-          boxShadow: '0 20px 50px rgba(99, 102, 241, 0.25)',
-        }}
-      >
-        <h2
-          style={{
-            margin: 0,
-            textAlign: 'center',
-            fontSize: 28,
-            letterSpacing: 2,
-          }}
-        >
-          令牌查询
-        </h2>
-        <p
-          style={{
-            textAlign: 'center',
-            opacity: 0.85,
-            marginTop: 6,
-            marginBottom: 22,
-            fontSize: 13,
-          }}
-        >
-          输入 sk-xxxx 形式的令牌，即可查询额度使用情况
-        </p>
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 14,
-            padding: 6,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            boxShadow: '0 10px 30px rgba(15, 23, 42, 0.12)',
-          }}
-        >
-          <span style={{ padding: '0 10px', fontSize: 18 }}>🔐</span>
+      <section className="hero-card">
+        <div className="hero-copy">
+          <div className="badge">Neko API Key Tool</div>
+          <h1>魔法令牌余额查询</h1>
+        </div>
+        <div className="mascot" aria-hidden="true">
+          <div className="cat-ear left" />
+          <div className="cat-ear right" />
+          <div className="cat-face">ฅ^•ﻌ•^ฅ</div>
+          <span>Balance Quest</span>
+        </div>
+      </section>
+
+      <section className="query-panel">
+        <label htmlFor="token-input">召唤令牌</label>
+        <div className="input-row">
+          <span className="lock">🔮</span>
           <input
+            id="token-input"
             type="text"
             value={key}
             placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxx"
             onChange={(e) => setKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && onQuery()}
             spellCheck={false}
-            style={{
-              flex: 1,
-              border: 'none',
-              outline: 'none',
-              fontSize: 15,
-              padding: '12px 4px',
-              color: '#0f172a',
-              background: 'transparent',
-            }}
           />
-          {key && (
-            <button
-              onClick={() => setKey('')}
-              title="清空"
-              style={{
-                border: 'none',
-                background: '#f1f5f9',
-                color: '#64748b',
-                width: 28,
-                height: 28,
-                borderRadius: '50%',
-                cursor: 'pointer',
-                fontSize: 14,
-              }}
-            >
-              ×
-            </button>
-          )}
-          <button
-            onClick={onQuery}
-            disabled={loading}
-            style={{
-              border: 'none',
-              background: loading ? '#94a3b8' : '#2563eb',
-              color: '#fff',
-              padding: '0 22px',
-              height: 44,
-              borderRadius: 10,
-              cursor: loading ? 'wait' : 'pointer',
-              fontSize: 14,
-              fontWeight: 600,
-              transition: 'background .2s',
-            }}
-          >
-            {loading ? '查询中…' : '立即查询'}
+          {key && <button className="ghost-btn" onClick={() => setKey('')}>清空</button>}
+          <button className="primary-btn" onClick={onQuery} disabled={loading}>
+            {loading ? '占卜中…' : '开始查询'}
           </button>
         </div>
       </section>
 
-      <section
-        style={{
-          width: '100%',
-          maxWidth: 880,
-          marginTop: 28,
-          background: '#fff',
-          borderRadius: 16,
-          padding: 24,
-          border: '1px solid #eef2f7',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 16,
-          }}
-        >
-          <h3
-            style={{
-              margin: 0,
-              fontSize: 16,
-              color: '#0f172a',
-              borderLeft: '3px solid #6366f1',
-              paddingLeft: 10,
-            }}
-          >
-            查询结果
-          </h3>
-          <button
-            onClick={onCopy}
-            disabled={!data}
-            style={{
-              border: '1px solid #e2e8f0',
-              background: data ? '#fff' : '#f8fafc',
-              color: data ? '#475569' : '#cbd5e1',
-              padding: '6px 12px',
-              borderRadius: 8,
-              cursor: data ? 'pointer' : 'not-allowed',
-              fontSize: 13,
-            }}
-          >
-            📋 复制令牌信息
-          </button>
+      <section className="result-panel">
+        <div className="panel-head">
+          <div>
+            <span className="kicker">Result</span>
+            <h2>余额卡片</h2>
+          </div>
+          <button className="copy-btn" onClick={onCopy} disabled={!data}>复制 JSON</button>
         </div>
 
         {!data && !loading && (
-          <div
-            style={{
-              padding: '36px 0',
-              textAlign: 'center',
-              color: '#94a3b8',
-              fontSize: 14,
-            }}
-          >
-            ⚠️ 请输入有效的令牌后查询，以查看额度详情。
+          <div className="empty-state">
+            <div>🌙</div>
+            <p>等待令牌输入中，查询后会在这里显示美元额度。</p>
           </div>
         )}
 
-        {loading && (
-          <div
-            style={{
-              padding: '36px 0',
-              textAlign: 'center',
-              color: '#6366f1',
-              fontSize: 14,
-            }}
-          >
-            正在查询，请稍候…
-          </div>
-        )}
+        {loading && <div className="empty-state loading">魔法水晶正在读取额度…</div>}
 
-        {data && stats && (
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 14,
-            }}
-          >
-            {stats.map((s) => (
-              <Stat key={s.label} {...s} />
-            ))}
+        {usage && (
+          <div className="usage-grid">
+            <MoneyCard label="剩余美元额度" quota={usage.available} unlimited={usage.unlimited} accent="pink" />
+            <MoneyCard label="总美元额度" quota={usage.granted} unlimited={usage.unlimited} accent="violet" />
+            <MoneyCard label="已使用美元额度" quota={usage.used} unlimited={false} accent="blue" />
+
+            <div className="detail-card">
+              <MiniInfo label="令牌名称" value={usage.name} />
+              <MiniInfo label="过期时间" value={usage.expiresAt} />
+              <MiniInfo label="模型限制" value={usage.modelText} note={usage.modelNote} />
+              <MiniInfo label="额度单位" value="美元额度" note="原始 quota 数值已隐藏" />
+            </div>
           </div>
         )}
       </section>
 
-      <footer
-        style={{
-          marginTop: 40,
-          color: '#94a3b8',
-          fontSize: 12,
-        }}
-      >
-        © {new Date().getFullYear()} check-api-tool · Powered by Vite + React
-      </footer>
+      <footer>© {new Date().getFullYear()} check-api-tool · made with neko magic</footer>
 
-      {toast && (
-        <Toast type={toast.type} onClose={() => setToast(null)}>
-          {toast.msg}
-        </Toast>
-      )}
-    </div>
+      {toast && <Toast type={toast.type} onClose={() => setToast(null)}>{toast.msg}</Toast>}
+    </main>
   );
 }
