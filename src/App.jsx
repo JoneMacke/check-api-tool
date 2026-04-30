@@ -115,16 +115,6 @@ export default function App() {
     }
   }, [key, showToast]);
 
-  const onCopy = useCallback(async () => {
-    if (!data) return;
-    try {
-      await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-      showToast('success', '已复制完整 JSON');
-    } catch {
-      showToast('error', '复制失败');
-    }
-  }, [data, showToast]);
-
   const usage = useMemo(() => {
     if (!data) return null;
     const granted = data.total_granted ?? data.totalGranted;
@@ -188,7 +178,6 @@ export default function App() {
           <section className="overview-section">
             <div className="section-head">
               <h2>额度概览</h2>
-              <button className="copy-btn" onClick={onCopy}>复制 JSON</button>
             </div>
           <div className="usage-grid">
             <MoneyCard label="总额度" value={usage.unlimited ? '无限额度' : fmtUsd(usage.granted)} accent="teal" />
