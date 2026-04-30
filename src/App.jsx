@@ -174,8 +174,10 @@ export default function App() {
 
       {!data && !loading && (
         <section className="empty-state">
-          <div>等待查询</div>
-          <p>输入令牌并点击搜索，额度信息会显示在这里。</p>
+          <button className="empty-query-btn" type="button" onClick={onQuery} aria-label="开始查询">
+            开始查询
+          </button>
+          <p>输入令牌并点击查询，额度信息会显示在这里。</p>
         </section>
       )}
 
